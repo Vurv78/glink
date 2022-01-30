@@ -29,7 +29,11 @@ local request = {
 		["Content-type"] = "application/json"
 	},
 
-	success = function(status, body, headers) end,
+	success = function(status, body, headers)
+		if status ~= 204 then
+			ErrorNoHalt("[Discord] Error: " .. body .. "\n")
+		end
+	end,
 
 	failed = function(err, errExt)
 		ErrorNoHalt("[Discord] Error: " .. err .. " (" .. errExt .. ")")
@@ -43,7 +47,13 @@ local function storeAvatar(player)
 		url = "https://steamcommunity.com/profiles/" .. player:SteamID64() .. "?xml=1",
 		timeout = 2,
 		success = function(len, data)
-			Avatars[player] = string.match(data, "<avatarFull><!%[CDATA%[(.*)%]%]></avatarFull>")
+			local avatar = string.match(data, "<avatarFull><!%[CDATA%[([^]]*)%]%]></avatarFull>")
+			if avatar <= 2048 then
+				Avatars[player] = avatar
+			else
+				ErrorNoHalt("[Discord] Error: " .. player:Nick() .. "'s Avatar is too large, falling back to question mark!\n")
+				Avatars[player] = "https://cdn.discordapp.com/attachments/732861600708690010/937444253993422848/qmark.jpg"
+			end
 		end,
 
 		failed = function(err)
@@ -85,6 +95,7 @@ local function discordEscape(msg)
 end
 
 hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
+	print("PlayerSay", ply, text, teamchat)
 	if not teamchat then
 		send(ply, text)
 	end
