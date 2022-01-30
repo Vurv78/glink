@@ -95,7 +95,6 @@ local function discordEscape(msg)
 end
 
 hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
-	print("PlayerSay", ply, text, teamchat)
 	if not teamchat then
 		send(ply, text)
 	end

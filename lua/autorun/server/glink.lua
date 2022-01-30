@@ -239,13 +239,20 @@ function Startup()
 	end
 
 	local bot = Bot.new(CONFIGS.BOT_TOKEN)
-
 	bot:addIntent(INTENT.GUILD_MESSAGES)
+
 	bot:onEvent("GUILD_CREATE", function(data)
 		print("Bot linked to: ", data.name)
 	end)
 
 	bot:onEvent("MESSAGE_CREATE", function(data)
+		local attachments, nattach = data.attachments, #data.attachments
+		if nattach > 0 then
+			for k = 1, math.min(nattach, 15) do
+				attachments[k] = attachments[k].url
+			end
+		end
+
 		-- https://discord.com/developers/docs/resources/channel#message-object
 		local channel_id = tonumber(data.channel_id)
 		if channel_id == CONFIGS.LINK_CHANNEL_ID and data.author.id ~= CONFIGS.BOT_ID then
@@ -267,13 +274,18 @@ function Startup()
 						Notify("Command ``%s`` does not exist!", cmd)
 					end
 				end
-			else
-				MsgC(BLACK, "[", BLURPLE, "Discord", BLACK, "] ", BLURPLE, username, WHITE, ": ", content, "\n")
-				net.Start("discord_cmsg")
-					net.WriteString(username)
-					net.WriteString(content)
-				net.Broadcast()
 			end
+
+			MsgC(BLACK, "[", BLURPLE, "Discord", BLACK, "] ", BLURPLE, username, WHITE, ": ", content, "\n")
+			net.Start("discord_msg")
+				net.WriteString(username)
+				net.WriteString(content)
+
+				net.WriteUInt(nattach, 4)
+				for k = 1, nattach do
+					net.WriteString(attachments[k])
+				end
+			net.Broadcast()
 		end
 	end)
 
