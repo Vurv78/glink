@@ -1,11 +1,18 @@
 local fmt = string.format
 
 -- Hardcoded whitelist for now until I figure out how to do roles.
-local Operators = {
+local PermOperators = {
 	["363590853140152321"] = true,
 	["467262196418740224"] = true,
-	["895801459407474689"] = true,
+	["895801459407474689"] = true
 }
+
+local Operators = setmetatable({}, {__index = PermOperators})
+
+-- Basic escape patcher
+local function discordEscape(msg)
+	return string.gsub(msg, "`", "\\`")
+end
 
 local Commands
 Commands = {
@@ -30,6 +37,10 @@ Commands = {
 
 	["lua"] = function(bot, data, rest)
 		if Operators[data.author.id] then
+			if string.sub(rest, 1, 6) == "```lua" then
+				rest = string.sub(rest, 7, -3)
+			end
+
 			local fn = CompileString(rest, "Discord", false)
 			if type(fn) == "string" then
 				return "Lua compile error: " .. fn
@@ -60,7 +71,14 @@ Commands = {
 
 	["rcon"] = function(bot, data, rest)
 		if Operators[data.author.id] then
-			RunConsoleCommand(rest)
+			local args = string.Explode(" ", rest)
+			PrintTable(args)
+
+			if args[1] and string.Trim(args[1]) ~= "" then
+				RunConsoleCommand(args[1], unpack(args, 2))
+			else
+				return "Usage: ``rcon <command> <args...>`` (Like RunConsoleCommand)"
+			end
 		else
 			return "No access!"
 		end
@@ -68,16 +86,78 @@ Commands = {
 
 	["op"] = function(bot, data, rest)
 		if Operators[data.author.id] then
-			rest = string.Trim(rest)
-			Operators[rest] = true
-			return "Added " .. rest .. " to the operator list."
+			local id = string.match(rest, "%d+")
+			if id then
+				if Operators[id] then
+					return "Already an operator!"
+				end
+				Operators[id] = true
+				return "Added " .. id .. " to the operator list."
+			end
+			return "Usage: ``op <id: number>``"
+		else
+			return "No access!"
+		end
+	end,
+
+	["deop"] = function(bot, data, rest)
+		if Operators[data.author.id] then
+			local id = string.match(rest, "%d+")
+			if id then
+				if id == data.author.id then
+					return "You can't deop yourself!"
+				end
+
+				Operators[id] = nil
+				return "Removed " .. id .. " from the operator list."
+			end
+			return "Usage: ``op <id: number>``"
 		else
 			return "No access!"
 		end
 	end,
 
 	["ram"] = function(bot, data, rest)
-		return collectgarbage("count")
+		return string.NiceSize( collectgarbage("count") * 1000 )
+	end,
+
+	["kick"] = function(bot, data, rest)
+		if Operators[data.author.id] then
+			local name = string.match(rest, "%S+")
+			if name then
+				name = string.lower(name)
+				for _, ply in pairs(player.GetAll()) do
+					if string.find(string.lower( ply:Nick() ), name, 1, true) then
+						ply:Kick("Kicked by " .. data.author.username)
+						return "Kicked ``" .. discordEscape(ply:Nick()) .. "``"
+					end
+				end
+				return "Couldn't find anyone with that name!"
+			end
+			return "Usage: ``!kick <name>``"
+		else
+			return "No access!"
+		end
+	end,
+
+	["kill"] = function(bot, data, rest)
+		if Operators[data.author.id] then
+			local name = string.match(rest, "%S+")
+			if name then
+				name = string.lower(name)
+
+				for _, ply in pairs(player.GetAll()) do
+					if string.find(string.lower( ply:Nick() ), name, 1, true) then
+						ply:Kill()
+					end
+				end
+				return "Couldn't find anyone with that name!"
+			else
+				return "Usage: ``!kill <name>``"
+			end
+		else
+			return "No access!"
+		end
 	end
 }
 

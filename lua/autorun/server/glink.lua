@@ -250,12 +250,12 @@ function Startup()
 			local username, content = data.author.username, data.content
 
 			if string.sub(content, 1, 1) == CONFIGS.PREFIX then
-				local cmd = string.match(content, "%S+", 2)
+				local cmd = string.match(content, "[%l]+", 2)
 
 				if cmd then
 					local handler = Commands[cmd]
 					if handler then
-						local rest = string.match(content, "%S+%s+(.*)$")
+						local rest = string.match(content, "%S+%s+(.*)$") or ""
 						local out = handler(bot, data, rest)
 						if out then
 							Notify(out)

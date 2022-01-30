@@ -1,6 +1,9 @@
 -- Sender portion of glink.
 ---@type DiscordConfigs
 local CONFIGS = include("configs.lua")
+-- Player avatars
+local Avatars = {}
+
 local http
 
 -- Need reqwest or CHTTP to avoid the discord ban on steam requests.
@@ -33,22 +36,38 @@ local request = {
 	end
 }
 
----@param sender string
+--- Gets the avatar of a player asynchronously
+local function storeAvatar(player)
+	http {
+		method = "GET",
+		url = "https://steamcommunity.com/profiles/" .. player:SteamID64() .. "?xml=1",
+		timeout = 2,
+		success = function(len, data)
+			Avatars[player] = string.match(data, "<avatarFull><!%[CDATA%[(.*)%]%]></avatarFull>")
+		end,
+
+		failed = function(err)
+			ErrorNoHalt("[Discord] Failed to retrieve avatar: " .. tostring(err) .. "\n")
+		end
+	}
+end
+
+---@param sender GPlayer
 ---@param content string
-local function send(sender, content)
+local function send(ply, content)
+	local avatar = Avatars[ply]
+	if not avatar then
+		avatar = CONFIGS.AVATAR
+		storeAvatar(ply)
+	end
+
 	request.body = util.TableToJSON {
 		["content"] = content,
-		["username"] = sender,
-		["avatar_url"] = CONFIGS.AVATAR
+		["username"] = ply:Nick(),
+		["avatar_url"] = avatar
 	}
 	http(request)
 end
-
-hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
-	if not teamchat then
-		send(ply:Nick(), text)
-	end
-end)
 
 local function notify(fmt, ...)
 	local content = string.format(fmt, ...)
@@ -65,13 +84,36 @@ local function discordEscape(msg)
 	return string.gsub(msg, "`", "\\`")
 end
 
+hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
+	if not teamchat then
+		send(ply, text)
+	end
+end)
+
 hook.Add("PlayerDisconnected", "discord_playerleave", function(ply)
-	local name = ply:Nick()
-	notify("``%s`` has left the server.", discordEscape(name))
+	notify("``%s`` has left the server.", discordEscape(ply:Nick()))
+	Avatars[ply] = nil
 end)
 
 hook.Add("PlayerConnect", "discord_playerjoin", function(name)
 	notify("``%s`` is connecting to the server.", discordEscape(name))
+end)
+
+hook.Add("PlayerInitialSpawn", "discord_playerspawn", function(ply)
+	notify("``%s`` has joined the server.", discordEscape(ply:Nick()))
+	storeAvatar(ply)
+end)
+
+hook.Add("PlayerDeath", "discord_playerdeath", function(victim, inflictor, attacker)
+	if victim == attacker then
+		return notify("``%s`` suicided!", discordEscape(victim:Nick()))
+	end
+
+	if attacker:IsPlayer() then
+		return notify("``%s`` was killed by ``%s``.", discordEscape(victim:Nick()), discordEscape(attacker:Nick()))
+	else
+		return notify("``%s`` was killed by ``%s``", discordEscape(victim:Nick()), attacker:GetClass())
+	end
 end)
 
 return send, notify, http, request
