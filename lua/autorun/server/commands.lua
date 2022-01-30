@@ -67,9 +67,13 @@ Commands = {
 	end,
 
 	["op"] = function(bot, data, rest)
-		rest = string.Trim(rest)
-		Operators[rest] = true
-		return "Added " .. rest .. " to the operators list"
+		if Operators[data.author.id] then
+			rest = string.Trim(rest)
+			Operators[rest] = true
+			return "Added " .. rest .. " to the operator list."
+		else
+			return "No access!"
+		end
 	end,
 
 	["ram"] = function(bot, data, rest)
