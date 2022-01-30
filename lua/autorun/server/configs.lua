@@ -4,7 +4,7 @@ local BOT_TOKEN = cookie.GetString("DISCORD_TOKEN")
 
 
 -- Prefix for commands
-local PREFIX = cookies.GetString("DISCORD_BOT_PREFIX", "!")
+local PREFIX = cookie.GetString("DISCORD_BOT_PREFIX", "!")
 
 -- Avatar shown in discord channel messages
 local AVATAR = cookie.GetString("DISCORD_AVATAR", "https://cdn.discordapp.com/attachments/732861600708690010/937171111421038592/glua.png")
@@ -12,7 +12,7 @@ local AVATAR = cookie.GetString("DISCORD_AVATAR", "https://cdn.discordapp.com/at
 -- Gateway used to communicate w/ discord.
 local GATEWAY = cookie.GetString("DISCORD_GATEWAY", "wss://gateway.discord.gg")
 
--- Bot ID
+-- Bot / Webhook ID
 local BOT_ID = cookie.GetString("DISCORD_BOT_ID", "936817398814765096")
 
 -- ID of the channel to send messages to and listen to.

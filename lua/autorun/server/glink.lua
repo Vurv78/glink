@@ -123,7 +123,7 @@ end
 
 ---@param token string
 function Bot.new(token)
-	local socket = GWSockets.createWebSocket(GATEWAY)
+	local socket = GWSockets.createWebSocket(CONFIGS.GATEWAY)
 
 	local instance = {
 		socket = socket,
@@ -255,7 +255,11 @@ function Startup()
 				if cmd then
 					local handler = Commands[cmd]
 					if handler then
-						handler(bot, data)
+						local rest = string.match(content, "%S+%s+(.*)$")
+						local out = handler(bot, data, rest)
+						if out then
+							Notify(out)
+						end
 					else
 						-- TODO: Say command not found.
 						Notify("Command ``%s`` does not exist!", cmd)
