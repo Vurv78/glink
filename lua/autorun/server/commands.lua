@@ -25,11 +25,11 @@ Commands = {
 	end,
 
 	["players"] = function(bot, data)
-		local plys = player.GetAll()
-		for k, ply in pairs(plys) do
-			plys[k] = ply:Nick()
+		local plys, out = player.GetAll(), {}
+		for k, ply in ipairs(plys) do
+			out[k] = ply:Nick() .. " (" .. ply:SteamID64() .. ")"
 		end
-		return fmt("Players online:\n```%s```", table.concat(plys, "\n\t"))
+		return fmt("Players online:\n```%s```", table.concat(out, "\n"))
 	end,
 
 	["map"] = game.GetMap,
@@ -37,9 +37,7 @@ Commands = {
 
 	["lua"] = function(bot, data, rest)
 		if Operators[data.author.id] then
-			if string.sub(rest, 1, 6) == "```lua" then
-				rest = string.sub(rest, 7, -3)
-			end
+			rest = string.match("^```lua\n?\r?(.*)```$") or rest
 
 			local fn = CompileString(rest, "Discord", false)
 			if type(fn) == "string" then
@@ -72,10 +70,11 @@ Commands = {
 	["rcon"] = function(bot, data, rest)
 		if Operators[data.author.id] then
 			local args = string.Explode(" ", rest)
-			PrintTable(args)
+			local first = args[1]
 
-			if args[1] and string.Trim(args[1]) ~= "" then
-				RunConsoleCommand(args[1], unpack(args, 2))
+			if first and string.Trim(first) ~= "" then
+				RunConsoleCommand(first, unpack(args, 2))
+				return "Ran command: " .. first .. " " .. table.concat(args, " ", 2)
 			else
 				return "Usage: ``rcon <command> <args...>`` (Like RunConsoleCommand)"
 			end
@@ -126,7 +125,7 @@ Commands = {
 			local name = string.match(rest, "%S+")
 			if name then
 				name = string.lower(name)
-				for _, ply in pairs(player.GetAll()) do
+				for _, ply in ipairs(player.GetAll()) do
 					if string.find(string.lower( ply:Nick() ), name, 1, true) then
 						ply:Kick("Kicked by " .. data.author.username)
 						return "Kicked ``" .. discordEscape(ply:Nick()) .. "``"
@@ -149,6 +148,7 @@ Commands = {
 				for _, ply in pairs(player.GetAll()) do
 					if string.find(string.lower( ply:Nick() ), name, 1, true) then
 						ply:Kill()
+						return
 					end
 				end
 				return "Couldn't find anyone with that name!"
