@@ -1,10 +1,8 @@
 require("gwsockets")
 
-local GATEWAY = cookie.GetString("DISCORD_GATEWAY", "wss://gateway.discord.gg")
-local BOT_ID = cookie.GetString("DISCORD_BOT_ID", "936817398814765096")
-local LINK_CHANNEL_ID = cookie.GetNumber("DISCORD_LINK_CHANNEL_ID", 936817277720997940)
-local BOT_TOKEN = cookie.GetString("DISCORD_TOKEN")
-assert(BOT_TOKEN, "Bot token is not set! Use cookie.Set('DISCORD_TOKEN', 'xyz')")
+---@type DiscordConfigs
+local CONFIGS = include("configs.lua")
+assert(CONFIGS.BOT_TOKEN, "Bot token is not set! Use cookie.Set('DISCORD_TOKEN', 'xyz')")
 
 ---@class DiscordIntent
 local INTENT = {
@@ -226,6 +224,9 @@ local rgb = Color
 
 local BLACK, BLURPLE, WHITE = rgb(0, 0, 0), rgb(88, 101, 242), rgb(255, 255, 255)
 
+local Commands = include("commands.lua")
+local Send, Notify, Http, Request = include("sender.lua")
+
 function Startup()
 	-- Hot reload probably
 	if CURRENT then
@@ -235,7 +236,7 @@ function Startup()
 		CURRENT = nil
 	end
 
-	local bot = Bot.new(BOT_TOKEN)
+	local bot = Bot.new(CONFIGS.BOT_TOKEN)
 
 	bot:addIntent(INTENT.GUILD_MESSAGES)
 	bot:onEvent("GUILD_CREATE", function(data)
@@ -245,13 +246,28 @@ function Startup()
 	bot:onEvent("MESSAGE_CREATE", function(data)
 		-- https://discord.com/developers/docs/resources/channel#message-object
 		local channel_id = tonumber(data.channel_id)
-		if channel_id == LINK_CHANNEL_ID and data.author.id ~= BOT_ID then
+		if channel_id == CONFIGS.LINK_CHANNEL_ID and data.author.id ~= CONFIGS.BOT_ID then
 			local username, content = data.author.username, data.content
-			MsgC(BLACK, "[", BLURPLE, "Discord", BLACK, "] ", BLURPLE, username, WHITE, ": ", content, "\n")
-			net.Start("discord_cmsg")
-				net.WriteString(username)
-				net.WriteString(content)
-			net.Broadcast()
+
+			if string.sub(content, 1, 1) == CONFIGS.PREFIX then
+				local cmd = string.match(content, "%S+", 2)
+
+				if cmd then
+					local handler = Commands[cmd]
+					if handler then
+						handler(bot, data)
+					else
+						-- TODO: Say command not found.
+						Notify("Command ``%s`` does not exist!", cmd)
+					end
+				end
+			else
+				MsgC(BLACK, "[", BLURPLE, "Discord", BLACK, "] ", BLURPLE, username, WHITE, ": ", content, "\n")
+				net.Start("discord_cmsg")
+					net.WriteString(username)
+					net.WriteString(content)
+				net.Broadcast()
+			end
 		end
 	end)
 
