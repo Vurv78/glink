@@ -18,6 +18,9 @@ local BOT_ID = cookie.GetString("DISCORD_BOT_ID", "936817398814765096")
 -- ID of the channel to send messages to and listen to.
 local LINK_CHANNEL_ID = cookie.GetNumber("DISCORD_LINK_CHANNEL_ID", 936817277720997940)
 
+-- Steam question mark if we couldn't get the avatar of someone, or haven't yet.
+local QMARK_AVATAR = cookie.GetString("DISCORD_UNKNOWNAVATAR", "https://cdn.discordapp.com/attachments/732861600708690010/937444253993422848/qmark.jpg")
+
 
 ---@class DiscordConfigs
 local Configs = {
@@ -30,6 +33,7 @@ local Configs = {
 	GATEWAY = GATEWAY,
 
 	BOT_TOKEN = BOT_TOKEN,
+	QMARK_AVATAR = QMARK_AVATAR,
 }
 
 return Configs

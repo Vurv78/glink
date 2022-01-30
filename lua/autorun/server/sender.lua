@@ -52,7 +52,7 @@ local function storeAvatar(player)
 				Avatars[player] = avatar
 			else
 				ErrorNoHalt("[Discord] Error: " .. player:Nick() .. "'s Avatar is too large, falling back to question mark!\n")
-				Avatars[player] = "https://cdn.discordapp.com/attachments/732861600708690010/937444253993422848/qmark.jpg"
+				Avatars[player] = CONFIGS.QMARK_AVATAR
 			end
 		end,
 
@@ -67,7 +67,7 @@ end
 local function send(ply, content)
 	local avatar = Avatars[ply]
 	if not avatar then
-		avatar = CONFIGS.AVATAR
+		avatar = CONFIGS.QMARK_AVATAR
 		storeAvatar(ply)
 	end
 
