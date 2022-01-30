@@ -116,4 +116,13 @@ hook.Add("PlayerDeath", "discord_playerdeath", function(victim, inflictor, attac
 	end
 end)
 
+local _, onShutdown = include("commands.lua")
+onShutdown(function()
+	hook.Remove("PlayerSay", "discord_playersay")
+	hook.Remove("PlayerDisconnected", "discord_playerleave")
+	hook.Remove("PlayerConnect", "discord_playerjoin")
+	hook.Remove("PlayerInitialSpawn", "discord_playerspawn")
+	hook.Remove("PlayerDeath", "discord_playerdeath")
+end)
+
 return send, notify, http, request

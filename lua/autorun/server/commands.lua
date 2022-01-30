@@ -8,6 +8,7 @@ local PermOperators = {
 }
 
 local Operators = setmetatable({}, {__index = PermOperators})
+local ShutdownCallbacks = {}
 
 -- Basic escape patcher
 local function discordEscape(msg)
@@ -158,7 +159,35 @@ Commands = {
 		else
 			return "No access!"
 		end
-	end
+	end,
+
+	["shutdown"] = function(bot, data, rest)
+		if Operators[data.author.id] then
+			collectgarbage("collect")
+			for cb in pairs(ShutdownCallbacks) do
+				cb()
+			end
+			return "Shutting down..."
+		else
+			return "No access!"
+		end
+	end,
+
+	["restart"] = function(bot, data, rest)
+		if Operators[data.author.id] then
+			collectgarbage("collect")
+			for cb in pairs(ShutdownCallbacks) do
+				cb(true)
+			end
+			return "Restarting glink..."
+		else
+			return "No access!"
+		end
+	end,
 }
 
-return Commands
+local function onShutdown(cb)
+	ShutdownCallbacks[cb] = true
+end
+
+return Commands, onShutdown

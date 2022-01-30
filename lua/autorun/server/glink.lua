@@ -173,6 +173,7 @@ end
 
 function Bot:kill()
 	self.callbacks = {}
+	self.killed = true
 	self:disconnect()
 	timer.Remove(fmt("discord_heartbeat_%p", self))
 end
@@ -205,6 +206,7 @@ function Bot:onConnected() end
 local Startup
 
 function Bot:onDisconnected()
+	if self.killed then return end -- Manually killed
 	self:kill()
 
 	print("Bot was disconnected, reconnecting in 5 seconds....")
@@ -224,7 +226,7 @@ local rgb = Color
 
 local BLACK, BLURPLE, WHITE = rgb(0, 0, 0), rgb(88, 101, 242), rgb(255, 255, 255)
 
-local Commands = include("commands.lua")
+local Commands, onShutdown = include("commands.lua")
 local Send, Notify, Http, Request = include("sender.lua")
 
 function Startup()
@@ -275,7 +277,18 @@ function Startup()
 		end
 	end)
 
-	CURRENT = bot:connect()
+	bot:connect()
+	CURRENT = bot
 end
+
+onShutdown(function(restart)
+	if CURRENT then
+		CURRENT:kill()
+	end
+	if restart then
+		-- Include self, autorefresh
+		include("autorun/server/glink.lua")
+	end
+end)
 
 Startup()
