@@ -38,7 +38,7 @@ Commands = {
 
 	["lua"] = function(bot, data, rest)
 		if Operators[data.author.id] then
-			rest = string.match("^```lua\n?\r?(.*)```$") or rest
+			rest = string.match(rest, "^```lua\n?\r?(.*)```$") or rest
 
 			local fn = CompileString(rest, "Discord", false)
 			if type(fn) == "string" then
