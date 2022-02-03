@@ -1,5 +1,7 @@
 if SERVER then
 	util.AddNetworkString("discord_msg")
+
+	CreateConVar("glink_enabled", "1", FCVAR_ARCHIVE)
 end
 
 if CLIENT then

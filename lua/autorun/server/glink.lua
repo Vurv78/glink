@@ -4,6 +4,8 @@ require("gwsockets")
 local CONFIGS = include("configs.lua")
 assert(CONFIGS.BOT_TOKEN, "Bot token is not set! Use cookie.Set('DISCORD_TOKEN', 'xyz')")
 
+local ENABLED = GetConVar("glink_enabled")
+
 ---@class DiscordIntent
 local INTENT = {
 	GUILDS = 0,
@@ -303,4 +305,18 @@ onShutdown(function(restart)
 	end
 end)
 
-Startup()
+if ENABLED:GetBool() then
+	Startup()
+end
+
+cvars.AddChangeCallback("glink_enabled", function(_, old, new)
+	if new == "0" and old == "1" and CURRENT then
+		print("Disabled glink!")
+		CURRENT:kill()
+	elseif new == "1" and old == "0" then
+		print("Enabled glink!")
+		Startup()
+	else
+		print("glink is already enabled.")
+	end
+end)
