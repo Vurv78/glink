@@ -228,7 +228,7 @@ local rgb = Color
 
 local BLACK, BLURPLE, WHITE = rgb(0, 0, 0), rgb(88, 101, 242), rgb(255, 255, 255)
 
-local Commands, onShutdown = include("commands.lua")
+local Commands = include("commands.lua")
 local Send, Notify, Http, Request = include("sender.lua")
 
 function Startup()
@@ -278,7 +278,8 @@ function Startup()
 				end
 			end
 
-			MsgC(BLACK, "[", BLURPLE, "Discord", BLACK, "] ", BLURPLE, username, WHITE, ": ", content, "\n")
+			hook.Run("glink.message_created", username, content, data, attachments)
+
 			net.Start("discord_msg")
 				net.WriteString(username)
 				net.WriteString(content)
@@ -295,7 +296,14 @@ function Startup()
 	CURRENT = bot
 end
 
-onShutdown(function(restart)
+---@param username string
+---@param content string
+---@param _data table
+hook.Add("glink.message_created", "glink.message_created.main", function(username, content, _data)
+	MsgC(BLACK, "[", BLURPLE, "Discord", BLACK, "] ", BLURPLE, username, WHITE, ": ", content, "\n")
+end)
+
+hook.Add("glink.shutdown", "glink.shutdown.main", function(restart)
 	if CURRENT then
 		CURRENT:kill()
 	end
@@ -312,7 +320,7 @@ end
 cvars.AddChangeCallback("glink_enabled", function(_, old, new)
 	if new == "0" and old == "1" and CURRENT then
 		print("Disabled glink!")
-		CURRENT:kill()
+		hook.Run("glink.shutdown", false)
 	elseif new == "1" and old == "0" then
 		print("Enabled glink!")
 		Startup()

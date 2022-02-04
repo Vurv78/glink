@@ -94,40 +94,49 @@ local function discordEscape(msg)
 	return string.gsub(msg, "`", "\\`")
 end
 
-hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
-	if not teamchat then
-		send(ply, text)
+local function addHooks()
+	hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
+		if not teamchat then
+			send(ply, text)
+		end
+	end)
+
+	hook.Add("PlayerDisconnected", "discord_playerleave", function(ply)
+		notify("``%s`` has left the server.", discordEscape(ply:Nick()))
+		Avatars[ply] = nil
+	end)
+
+	hook.Add("PlayerConnect", "discord_playerjoin", function(name)
+		notify("``%s`` is connecting to the server.", discordEscape(name))
+	end)
+
+	hook.Add("PlayerInitialSpawn", "discord_playerspawn", function(ply)
+		notify("``%s`` has joined the server.", discordEscape(ply:Nick()))
+		storeAvatar(ply)
+	end)
+
+	hook.Add("PlayerDeath", "discord_playerdeath", function(victim, inflictor, attacker)
+		if victim == attacker then
+			return notify("``%s`` suicided!", discordEscape(victim:Nick()))
+		end
+
+		if attacker:IsPlayer() then
+			return notify("``%s`` was killed by ``%s``.", discordEscape(victim:Nick()), discordEscape(attacker:Nick()))
+		else
+			return notify("``%s`` was killed by ``%s``", discordEscape(victim:Nick()), attacker:GetClass())
+		end
+	end)
+end
+
+-- This should probably be centralized onto some onStartup hook or something.
+cvars.AddChangeCallback("glink_enabled", function(_, old, new)
+	if new == "1" and old == "0" then
+		addHooks()
+		print("Added glink commands!")
 	end
 end)
 
-hook.Add("PlayerDisconnected", "discord_playerleave", function(ply)
-	notify("``%s`` has left the server.", discordEscape(ply:Nick()))
-	Avatars[ply] = nil
-end)
-
-hook.Add("PlayerConnect", "discord_playerjoin", function(name)
-	notify("``%s`` is connecting to the server.", discordEscape(name))
-end)
-
-hook.Add("PlayerInitialSpawn", "discord_playerspawn", function(ply)
-	notify("``%s`` has joined the server.", discordEscape(ply:Nick()))
-	storeAvatar(ply)
-end)
-
-hook.Add("PlayerDeath", "discord_playerdeath", function(victim, inflictor, attacker)
-	if victim == attacker then
-		return notify("``%s`` suicided!", discordEscape(victim:Nick()))
-	end
-
-	if attacker:IsPlayer() then
-		return notify("``%s`` was killed by ``%s``.", discordEscape(victim:Nick()), discordEscape(attacker:Nick()))
-	else
-		return notify("``%s`` was killed by ``%s``", discordEscape(victim:Nick()), attacker:GetClass())
-	end
-end)
-
-local _, onShutdown = include("commands.lua")
-onShutdown(function()
+hook.Add("glink.shutdown", function()
 	hook.Remove("PlayerSay", "discord_playersay")
 	hook.Remove("PlayerDisconnected", "discord_playerleave")
 	hook.Remove("PlayerConnect", "discord_playerjoin")
