@@ -111,8 +111,12 @@ local function addHooks()
 	end)
 
 	hook.Add("PlayerInitialSpawn", "discord_playerspawn", function(ply)
-		notify("``%s`` has joined the server.", discordEscape(ply:Nick()))
-		storeAvatar(ply)
+		if ply:IsBot() then
+			notify("``%s`` has joined the server.", ply:Nick() or ply.OriginalName)
+		else
+			notify("``%s`` has joined the server.", discordEscape(ply:Nick()))
+			storeAvatar(ply)
+		end
 	end)
 
 	hook.Add("PlayerDeath", "discord_playerdeath", function(victim, inflictor, attacker)
@@ -134,7 +138,7 @@ cvars.AddChangeCallback("glink_enabled", function(_, old, new)
 		addHooks()
 		print("Added glink commands!")
 	end
-end)
+end, "main")
 
 hook.Add("glink.shutdown", function()
 	hook.Remove("PlayerSay", "discord_playersay")
@@ -142,6 +146,8 @@ hook.Add("glink.shutdown", function()
 	hook.Remove("PlayerConnect", "discord_playerjoin")
 	hook.Remove("PlayerInitialSpawn", "discord_playerspawn")
 	hook.Remove("PlayerDeath", "discord_playerdeath")
+
+	cvars.RemoveChangeCallback("glink_enabled", "main")
 end)
 
 return send, notify, http, request

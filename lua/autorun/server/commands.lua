@@ -26,10 +26,14 @@ Commands = {
 
 	["players"] = function(bot, data)
 		local plys, out = player.GetAll(), {}
-		for k, ply in ipairs(plys) do
-			out[k] = ply:Nick() .. " (" .. ply:SteamID64() .. ")"
+
+		if #plys > 0 then
+			for k, ply in ipairs(plys) do
+				out[k] = ply:Nick() .. " (" .. ply:SteamID64() .. ")"
+			end
+			return fmt("Players online:\n```lua\n%s```", table.concat(out, "\n"))
 		end
-		return fmt("Players online:\n```%s```", table.concat(out, "\n"))
+		return "No players online. 😔"
 	end,
 
 	["map"] = game.GetMap,
@@ -110,7 +114,7 @@ Commands = {
 				Operators[id] = nil
 				return "Removed " .. id .. " from the operator list."
 			end
-			return "Usage: ``op <id: number>``"
+			return "Usage: ``deop <id: number>``"
 		else
 			return "No access!"
 		end
