@@ -24,7 +24,7 @@ if CLIENT then
 	---@param username string
 	---@param content string
 	---@param attachments table<number, string> # URLs
-	hook.Add("glink.message_created", "glink.message_created.main", function(username, content, _, attachments)
+	hook.Add("glink.message_created", "glink.message_created.main", function(name, content, _, attachments)
 		for _, attachment in ipairs(attachments) do
 			if string.Trim(content) ~= "" then
 				content = content .. "\n" .. url
