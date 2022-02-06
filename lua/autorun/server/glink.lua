@@ -312,6 +312,7 @@ hook.Add("glink.shutdown", "glink.shutdown.main", function(restart)
 		-- Include self, autorefresh
 		include("autorun/server/glink.lua")
 	end
+	cvars.RemoveChangeCallback("glink_enabled", "main2")
 end)
 
 if ENABLED:GetBool() then
@@ -328,4 +329,4 @@ cvars.AddChangeCallback("glink_enabled", function(_, old, new)
 	else
 		print("glink is already enabled.")
 	end
-end)
+end, "main2")
