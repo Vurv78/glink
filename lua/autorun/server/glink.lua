@@ -261,7 +261,8 @@ function Startup()
 			local username, content = data.author.username, data.content
 
 			if string.sub(content, 1, 1) == CONFIGS.PREFIX then
-				local cmd = string.match(content, "[%l]+", 2)
+				content = string.lower(content)
+				local cmd = string.match(content, "^[%l]+$", 2)
 
 				if cmd then
 					local handler = Commands[cmd]
