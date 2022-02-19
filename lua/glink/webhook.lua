@@ -1,6 +1,8 @@
 -- Sender portion of glink.
 ---@type DiscordConfigs
-local CONFIGS = include("configs.lua")
+local CONFIGS = include("glink/configs.lua")
+
+local ENABLED = GetConVar("glink_enabled")
 -- Player avatars
 local Avatars = {}
 
@@ -71,9 +73,13 @@ local function send(ply, content)
 		storeAvatar(ply)
 	end
 
+	local name = ply:Nick()
+	if not ply:Alive() then
+		name = "*DEAD* " .. name
+	end
 	request.body = util.TableToJSON {
 		["content"] = content,
-		["username"] = ply:Nick(),
+		["username"] = name,
 		["avatar_url"] = avatar
 	}
 	http(request)
@@ -146,8 +152,10 @@ hook.Add("glink.shutdown", function()
 	hook.Remove("PlayerConnect", "discord_playerjoin")
 	hook.Remove("PlayerInitialSpawn", "discord_playerspawn")
 	hook.Remove("PlayerDeath", "discord_playerdeath")
-
-	cvars.RemoveChangeCallback("glink_enabled", "main")
 end)
+
+if ENABLED then
+	addHooks()
+end
 
 return send, notify, http, request

@@ -2,7 +2,6 @@
 local WEBHOOK = cookie.GetString("DISCORD_WEBHOOK")
 local BOT_TOKEN = cookie.GetString("DISCORD_TOKEN")
 
-
 -- Prefix for commands
 local PREFIX = cookie.GetString("DISCORD_BOT_PREFIX", "!")
 
