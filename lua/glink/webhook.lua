@@ -131,10 +131,18 @@ local function addHooks()
 		end
 
 		if attacker:IsPlayer() then
-			return notify("``%s`` was killed by ``%s``.", discordEscape(victim:Nick()), discordEscape(attacker:Nick()))
+			notify("``%s`` was killed by ``%s``.", discordEscape(victim:Nick()), discordEscape(attacker:Nick()))
 		else
-			return notify("``%s`` was killed by ``%s``", discordEscape(victim:Nick()), attacker:GetClass())
+			notify("``%s`` was killed by ``%s``", discordEscape(victim:Nick()), attacker:GetClass())
 		end
+	end)
+
+	hook.Add("Initialize", "discord_server_startup", function()
+		notify("Server startup!")
+	end)
+
+	hook.Add("ShutDown", "discord_server_shutdown", function()
+		notify("Server is shutting down..")
 	end)
 end
 
