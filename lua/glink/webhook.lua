@@ -1,8 +1,7 @@
 -- Sender portion of glink.
----@type DiscordConfigs
-local CONFIGS = include("glink/configs.lua")
+local CONFIGS = require("glink/configs")
+local ENABLED = CONFIGS.ENABLED
 
-local ENABLED = GetConVar("glink_enabled")
 -- Player avatars
 local Avatars = {}
 
@@ -17,6 +16,8 @@ end
 if not http and pcall(require, "chttp") and CHTTP ~= nil then
 	http = CHTTP
 end
+
+local _, _, _, getUserdata = require("glink/db")
 
 -- Request template to re-use
 local request = {
@@ -103,7 +104,16 @@ end
 local function addHooks()
 	hook.Add("PlayerSay", "discord_playersay", function(ply, text, teamchat)
 		if not teamchat then
-			send(ply, text)
+			local new = string.gsub(text, "@([%w_]+)", function(name)
+				local data = getUserdata(name)
+				if data then
+					return "<@" .. data.id .. ">"
+				end
+			end)
+
+			send(ply, new or text)
+
+			return new
 		end
 	end)
 

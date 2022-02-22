@@ -1,7 +1,6 @@
 local ENABLED = GetConVar("glink_enabled")
 
----@type DiscordConfigs
-local CONFIGS = include("glink/configs.lua")
+local CONFIGS = require("glink/configs")
 
 ---@type DiscordBot
 local Bot, INTENT = include("glink/api.lua")
@@ -35,6 +34,8 @@ function Bot:onDisconnected()
 	timer.Simple(5, Startup)
 end
 
+local loadUserdata, saveUserdata, setUserdata = require("glink/db")
+
 function Startup()
 	-- Hot reload probably
 	if CURRENT_BOT then
@@ -44,11 +45,23 @@ function Startup()
 		CURRENT_BOT = nil
 	end
 
+	loadUserdata()
+
 	local bot = Bot.new(CONFIGS.BOT_TOKEN)
 	bot:addIntent(INTENT.GUILD_MESSAGES)
 
 	bot:onEvent("GUILD_CREATE", function(data)
 		print("Bot linked to: ", data.name)
+	end)
+
+	-- Cache user names and IDs for mentions.
+	bot:onEvent("MESSAGE_CREATE", function(data)
+		local author_name, author_id = data.author.username, data.author.id
+
+		local channel_id = tonumber(data.channel_id)
+		if channel_id == CONFIGS.LINK_CHANNEL_ID and author_id ~= CONFIGS.BOT_ID then
+			setUserdata(author_name, author_id)
+		end
 	end)
 
 	bot:onEvent("MESSAGE_CREATE", function(data)

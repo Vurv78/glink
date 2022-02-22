@@ -1,4 +1,5 @@
-local CONFIGS = include("glink/configs.lua")
+local CONFIGS = require("glink/configs")
+local _, saveUserdata = require("glink/db")
 
 ---@class DiscordIntent
 local INTENT = {

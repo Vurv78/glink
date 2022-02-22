@@ -1,10 +1,9 @@
 util.AddNetworkString("discord_msg")
-CreateConVar("glink_enabled", "1", FCVAR_ARCHIVE)
 
+require("fix_require")
 require("gwsockets")
 
----@type DiscordConfigs
-local CONFIGS = include("glink/configs.lua")
+local CONFIGS = require("glink/configs")
 assert(CONFIGS.BOT_TOKEN, "Bot token is not set! Use cookie.Set('DISCORD_TOKEN', 'xyz')")
 
 ---@type fun()

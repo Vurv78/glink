@@ -20,12 +20,15 @@ local LINK_CHANNEL_ID = cookie.GetNumber("DISCORD_LINK_CHANNEL_ID", 936817277720
 -- Steam question mark if we couldn't get the avatar of someone, or haven't yet.
 local QMARK_AVATAR = cookie.GetString("DISCORD_UNKNOWNAVATAR", "https://cdn.discordapp.com/attachments/732861600708690010/937444253993422848/qmark.jpg")
 
+local ENABLED = CreateConVar("glink_enabled", "1", FCVAR_ARCHIVE, "Enable Glink")
+
 
 ---@class DiscordConfigs
 local Configs = {
 	PREFIX = PREFIX,
 	AVATAR = AVATAR,
 	WEBHOOK = WEBHOOK,
+	ENABLED = ENABLED,
 
 	LINK_CHANNEL_ID = LINK_CHANNEL_ID,
 	BOT_ID = BOT_ID,
