@@ -172,7 +172,7 @@ hook.Add("glink.shutdown", function()
 	hook.Remove("PlayerDeath", "discord_playerdeath")
 end)
 
-if ENABLED then
+if ENABLED:GetBool() then
 	addHooks()
 end
 

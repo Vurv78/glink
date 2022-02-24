@@ -1,6 +1,5 @@
-local ENABLED = GetConVar("glink_enabled")
-
 local CONFIGS = require("glink/configs")
+local ENABLED = CONFIGS.ENABLED
 
 ---@type DiscordBot
 local Bot, INTENT = include("glink/api.lua")
