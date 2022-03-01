@@ -1,6 +1,5 @@
 -- Sender portion of glink.
 local CONFIGS = require("glink/configs")
-local ENABLED = CONFIGS.ENABLED
 
 -- Player avatars
 local Avatars = {}
@@ -164,7 +163,7 @@ cvars.AddChangeCallback("glink_enabled", function(_, old, new)
 	end
 end, "main")
 
-hook.Add("glink.shutdown", function()
+hook.Add("glink.shutdown", "remhooks", function()
 	hook.Remove("PlayerSay", "discord_playersay")
 	hook.Remove("PlayerDisconnected", "discord_playerleave")
 	hook.Remove("PlayerConnect", "discord_playerjoin")
@@ -172,7 +171,7 @@ hook.Add("glink.shutdown", function()
 	hook.Remove("PlayerDeath", "discord_playerdeath")
 end)
 
-if ENABLED:GetBool() then
+if CONFIGS.Enabled then
 	addHooks()
 end
 

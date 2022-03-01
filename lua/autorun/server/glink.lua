@@ -2,9 +2,7 @@ util.AddNetworkString("discord_msg")
 
 require("fix_require")
 require("gwsockets")
-
-local CONFIGS = require("glink/configs")
-assert(CONFIGS.BOT_TOKEN, "Bot token is not set! Use cookie.Set('DISCORD_TOKEN', 'xyz')")
+require("glink/configs")
 
 ---@type fun()
 local Startup = include("glink/bot.lua")
@@ -30,3 +28,8 @@ cvars.AddChangeCallback("glink_enabled", function(_, old, new)
 		print("glink is already enabled.")
 	end
 end, "main2")
+
+concommand.Add("glink_reload", function()
+	MsgN("Reloading!")
+	hook.Run("glink.shutdown", true)
+end)

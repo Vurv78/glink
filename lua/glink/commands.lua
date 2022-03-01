@@ -1,13 +1,5 @@
+local CONFIGS = require("glink/configs")
 local fmt = string.format
-
--- Hardcoded whitelist for now until I figure out how to do roles.
-local PermOperators = {
-	["363590853140152321"] = true,
-	["467262196418740224"] = true,
-	["895801459407474689"] = true
-}
-
-local Operators = setmetatable({}, {__index = PermOperators})
 
 -- Basic escape patcher
 local function discordEscape(msg)
@@ -26,10 +18,13 @@ local PERMS = {
 	Owner = 3
 }
 
+---@param member table
 ---@return CommandPerms
-local function getPermsFromID(id)
-	if Operators[id] then
-		return PERMS.Operator
+local function getPermsFromMember(member)
+	for _, role_id in ipairs(member.roles) do
+		if role_id == CONFIGS.PermsRole then
+			return PERMS.Operator
+		end
 	end
 	return PERMS.Everyone
 end
@@ -57,8 +52,7 @@ end
 local function runCommand(cmd, bot, data, rest)
 	local cdata = Commands[cmd]
 	if cdata then
-		local sender_id = data.author.id
-		local perms = getPermsFromID(sender_id)
+		local perms = getPermsFromMember(data.member)
 
 		if perms >= cdata.perms then
 			return cdata.func(bot, data, rest)

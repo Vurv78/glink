@@ -1,5 +1,4 @@
 local CONFIGS = require("glink/configs")
-local ENABLED = CONFIGS.ENABLED
 
 ---@type DiscordBot
 local Bot, INTENT = include("glink/api.lua")
@@ -56,9 +55,7 @@ function Startup()
 	-- Cache user names and IDs for mentions.
 	bot:onEvent("MESSAGE_CREATE", function(data)
 		local author_name, author_id = data.author.username, data.author.id
-
-		local channel_id = tonumber(data.channel_id)
-		if channel_id == CONFIGS.LINK_CHANNEL_ID and author_id ~= CONFIGS.BOT_ID then
+		if data.webhook_id ~= author_id and data.channel_id == CONFIGS.LinkChannel then
 			setUserdata(author_name, author_id)
 		end
 	end)
@@ -72,11 +69,10 @@ function Startup()
 		end
 
 		-- https://discord.com/developers/docs/resources/channel#message-object
-		local channel_id = tonumber(data.channel_id)
-		if channel_id == CONFIGS.LINK_CHANNEL_ID and data.author.id ~= CONFIGS.BOT_ID then
+		if data.channel_id == CONFIGS.LinkChannel and data.author.id ~= data.webhook_id then
 			local username, content = data.author.username, data.content
 
-			if string.sub(content, 1, 1) == CONFIGS.PREFIX then
+			if string.sub(content, 1, 1) == CONFIGS.Prefix then
 				local cmd = string.match(content, "^(%w+)", 2)
 
 				if cmd then
@@ -113,7 +109,7 @@ function Startup()
 	CURRENT_BOT = bot
 end
 
-if ENABLED:GetBool() then
+if CONFIGS.Enabled then
 	Startup()
 end
 
