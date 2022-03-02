@@ -37,6 +37,11 @@ local Commands = {}
 ---@param perms CommandPerms? # Default is Everyone
 ---@param func fun(bot: DiscordBot, data: table, rest: string)
 local function Command(name, desc, perms, func)
+	assert( type(name) == "string", "Invalid parameter #1 to ``Command``. Expected string, got " .. type(name) )
+	assert( type(desc) == "string", "Invalid parameter #2 to ``Command``. Expected string, got " .. type(desc) )
+	assert(perms == nil or type(perms) == "number", "Invalid parameter #3 to ``Command``. Expected number, got " .. type(perms))
+	assert(type(func) == "function", "Invalid parameter #4 to ``Command``. Expected function, got " .. type(func))
+
 	Commands[name] = {
 		["desc"] = desc,
 		["perms"] = perms or PERMS.Everyone,
@@ -48,7 +53,7 @@ end
 ---@param str string
 ---@param len integer
 local function limitString(str, len)
-	if #str >= math.min(len - 3) then
+	if #str > (len - 3) then
 		return str:sub(1, len) .. "..."
 	else
 		return str
@@ -59,14 +64,14 @@ end
 ---@param bot DiscordBot
 ---@param data table
 ---@param rest string
----@return string msg?
+---@return string msg
 local function runCommand(cmd, bot, data, rest)
 	local cdata = Commands[cmd]
 	if cdata then
 		local perms = getPermsFromMember(data.member)
 
 		if perms >= cdata.perms then
-			limitString( cdata.func(bot, data, rest), 2000 )
+			return limitString( cdata.func(bot, data, rest), 2000 )
 		else
 			return "❌ You don't have permission to use this command!"
 		end
@@ -77,6 +82,12 @@ local function runCommand(cmd, bot, data, rest)
 	end
 end
 
+---@param how string
+---@return string
+local function Usage(how)
+	return "❔ Usage: ``" .. CONFIGS.Prefix .. how .. "``"
+end
+
 Command (
 	"help",
 	"❓ Shows this message. Optionally shows full description for certain command",
@@ -85,17 +96,17 @@ Command (
 		local cmd = string.match(rest, "%w+")
 		if cmd then
 			if Commands[cmd] then
-				return fmt("Help for ``%s``:\n\t```%s```", cmd, Commands[cmd].desc)
+				return fmt("Help for ``%s``:\n```%s```", cmd, Commands[cmd].desc)
 			else
 				return fmt("❌ Command ``%s`` not found.", cmd)
 			end
 		end
 		local out, nout = {}, 1
 		for name, cdata in pairs(Commands) do
-			out[nout] = name .. " -- " .. limitString(cdata.desc, 50)
+			out[nout] = name .. " :: " .. limitString(cdata.desc, 40)
 			nout = nout + 1
 		end
-		return fmt("Commands: \n```hs\n%s\n```", table.concat(out, "\n"))
+		return fmt("🗄️ Commands: \n```asciidoc\n%s\n```", table.concat(out, "\n"))
 	end
 )
 
@@ -148,16 +159,16 @@ local LuaEnv = setmetatable({}, { __index = _G })
 
 function LuaEnv.print(...)
 	local out = {}
-	for k, v in ipairs(arg) do
-		out[k] = tostring(v)
+	for i = 1, select("#", ...) do
+		out[i] = tostring( select(i, ...) )
 	end
 	LuaStdout[#LuaStdout + 1] = table.concat(out, "\t") .. "\n"
 end
 
 function LuaEnv.ErrorNoHalt(...)
 	local out = {}
-	for k, v in ipairs(arg) do
-		out[k] = tostring(v)
+	for i = 1, select("#", ...) do
+		out[i] = tostring( select(i, ...) )
 	end
 	LuaStdout[#LuaStdout + 1] = table.concat(out, "")
 end
@@ -165,8 +176,8 @@ end
 function LuaEnv.MsgN(...)
 	-- Print(...) but without the \t inserted.
 	local out = {}
-	for k, v in ipairs(arg) do
-		out[k] = tostring(v)
+	for i = 1, select("#", ...) do
+		out[i] = tostring( select(i, ...) )
 	end
 	LuaStdout[#LuaStdout + 1] = table.concat(out, "") .. "\n"
 end
@@ -174,8 +185,8 @@ end
 function LuaEnv.Msg(...)
 	--- MsgN but without the \n at the end.
 	local out = {}
-	for k, v in ipairs(arg) do
-		out[k] = tostring(v)
+	for i = 1, select("#", ...) do
+		out[i] = tostring( select(i, ...) )
 	end
 	LuaStdout[#LuaStdout + 1] = table.concat(out, "")
 end
@@ -231,7 +242,7 @@ Command (
 			RunConsoleCommand(first, unpack(args, 2))
 			return "✅ Ran command: " .. first .. " " .. table.concat(args, " ", 2)
 		else
-			return "❔ Usage: ``rcon <command> <args...>`` (Like RunConsoleCommand)"
+			return Usage("rcon <command> <args...> (Like RunConsoleCommand)")
 		end
 	end
 )
@@ -241,13 +252,14 @@ Command (
 	"💻 Returns current memory usage of lua through the garbage collector",
 	nil,
 	function(bot, data, rest)
-		return fmt("🖥️ Server ram usage:\n``%s``", string.NiceSize( collectgarbage("count") * 1000 ) )
+		return fmt("🖥️ Ram usage:\n``%s``", string.NiceSize( collectgarbage("count") * 1000 ) )
 	end
 )
 
 Command (
 	"kick",
 	"🥾 Kicks a player from the server",
+	PERMS.Operator,
 	function(bot, data, rest)
 		local name = string.match(rest, "%S+")
 		if name then
@@ -260,7 +272,27 @@ Command (
 			end
 			return "❌ Couldn't find anyone with that name!"
 		end
-		return "❔ Usage: ``!kick <name>``"
+		return Usage("kick <name>")
+	end
+)
+
+Command (
+	"ban",
+	"⚒️ Bans a player from the server",
+	PERMS.Operator,
+	function(bot, data, rest)
+		local name, minutes = string.match(rest, "(%S+)%s+(%d+)")
+		if name then
+			name = string.lower(name)
+			for _, ply in ipairs(player.GetAll()) do
+				if string.find(string.lower( ply:Nick() ), name, 1, true) then
+					ply:Ban( tonumber(minutes), "Banned by " .. data.author.username)
+					return "⚒️ Banned ``" .. discordEscape(ply:Nick()) .. "``"
+				end
+			end
+			return "❌ Couldn't find anyone with that name!"
+		end
+		return Usage("ban <name> <minutes>")
 	end
 )
 
@@ -281,7 +313,7 @@ Command (
 			end
 			return "❌ Couldn't find anyone with that name!"
 		else
-			return "❔ Usage: ``!kill <name>``"
+			return Usage("kill <name>")
 		end
 	end
 )
