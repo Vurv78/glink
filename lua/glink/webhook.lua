@@ -50,7 +50,10 @@ local function storeAvatar(player)
 		timeout = 2,
 		success = function(len, data)
 			local avatar = string.match(data, "<avatarFull><!%[CDATA%[([^]]*)%]%]></avatarFull>")
-			if #avatar <= 2048 then
+			if not avatar then
+				ErrorNoHalt("[Discord] Error: Could not get avatar for " .. player:Nick() .. "\n")
+				Avatars[player] = CONFIGS.QMARK_AVATAR
+			elseif #avatar <= 2048 then
 				Avatars[player] = avatar
 			else
 				ErrorNoHalt("[Discord] Error: " .. player:Nick() .. "'s Avatar is too large, falling back to question mark!\n")
